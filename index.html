@@ -4,11 +4,11 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+		<title>P2P: Apollo Server Lifecycle</title>
 
 		<link rel="stylesheet" href="dist/reset.css">
 		<link rel="stylesheet" href="dist/reveal.css">
-		<link rel="stylesheet" href="dist/theme/black.css" id="theme">
+		<link rel="stylesheet" href="dist/theme/moon.css" id="theme">
 
 		<!-- Theme used for syntax highlighted code -->
 		<link rel="stylesheet" href="plugin/highlight/monokai.css" id="highlight-theme">
@@ -16,8 +16,77 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
+				<section data-markdown>
+					Peer2Peer
+					# The Apollo Server Lifecycle
+				</section>
+				<section>
+					<h2>The Problem Statement</h2>
+					<div>
+						<p style="font-size: large">Authentication wasn't being awaited properly inside the context function. Someone with a bogus token could have requests. We also needed to allow introspection queries to pass through authentication for schema validation</p>
+						<img src="assets/DataDogError.png" alt="image of datadog error 'UNHANDLED PROMISE REJECTION'" height="350px">
+					</div>
+				</section>
+				<section>
+					<h2>The Solution: Create a Plugin!</h2>
+					<pre><code class="hljs" data-trim><script type="text/template">
+					export const authenticationPlugin: ApolloServerPlugin<ApolloContext> = {
+						  requestDidStart() {
+							return {
+							  didResolveOperation() {
+							  // ... our authentication logic here
+							  }
+							};
+						  },
+						};
+					</script></code></pre>
+				</section>
+				<section>
+					<h2>Apollo Server Lifecycle</h2>
+					<img src="assets/gql_lifecycle_events.png" style="height: 500px;">
+				</section>
+				<section>
+					<section class="fragments" data-background-color="white" data-background-iframe="https://www.apollographql.com/docs/apollo-server/integrations/plugins/#request-lifecycle-event-flow" data-background-interactive>
+						<div class="fragment" style="position:absolute; width: 30%; right: 84%; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 20px; text-align: left;">
+							<h3>Life of a GraphQl Request</h3>
+							<p class="fragment">HTTP request received,<br/>request body is parsed as JSON</p>
+							<span class="fragment">The context function is executed</span>
+							<p class="fragment">Any dataSources are initialized</p>
+							<p class="fragment">The request is ready to be processed</p>
+							<p class="fragment">The series of lifecycle hooks are invoked</p>
+						</div>
+						<div class="fragment" style="position:absolute; width: 30%; left: 84%; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 20px; text-align: left;">
+							<h3>A Note about GraphQL Caching</h3>
+							<p class="fragment">Apollo will cache valid documents to optimize requests by bypassing some of the lifecycle events mentioned. For example, parsing and validating will be skipped if the document can be looked up in the GraphQL cache.</p>
+							<p class="fragment">This posed a problem for authentication. You could essentially run a valid request in the GraphQL console that was cached even if your token expired. That's where our plugin comes in. We force the authentication to resolve for each request, new or cached.</p>
+						</div>
+					</section>
+					<section>
+						<h2>Choosing the right lifecycle event</h2>
+						<p>We could have handled authentication inside the context function. However, we would have duplicated a lot of work that GraphQL does for us already.</p>
+					</section>
+					<section>
+						<h2>Before the Operation is Executed</h2>
+						<p>We decided to check each incoming operation and inserted our plugin at the didResolveOperation event.</p>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="|2,8|4-6"><script type="text/template">
+						export const authenticationPlugin: ApolloServerPlugin<ApolloContext> = {
+						  requestDidStart() {
+							return {
+							  didResolveOperation() {
+							  // ... our authentication logic here
+							  }
+							};
+						  },
+						};
+						</script></code></pre>
+					</section>
+				</section>
+				<section class="fragments" data-background="https://media.giphy.com/media/wDOFUCaxyv2XC/giphy.gif" style="text-align: left; display: flex; flex-direction: row; justify-content: space-between;">
+					<h1 class="fragment fade-in-then-semi-out" style="color: #2b2b2b; text-shadow: #FC0 1px 0 10px;">The end</h1>
+					<h2 class="fragment" style="color: #2b2b2b; text-shadow: #FC0 1px 0 10px;"><a href="#/4">Questions?</a></h2>
+				</section>
+				<section data-background-color="white" data-background-iframe="https://www.apollographql.com/docs/apollo-server/integrations/plugins/#request-lifecycle-event-flow" data-background-interactive>
+				</section>
 			</div>
 		</div>
 
