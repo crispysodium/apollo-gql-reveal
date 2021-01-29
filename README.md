@@ -1,3 +1,9 @@
+## P2P: Apollo Server GraphQL Request Lifecycle
+
+### To view presentation [click here](https://crispysodium.github.io/apollo-gql-reveal/)
+<br>
+<p>This project utilizes reveal.js - checkout the documentation below:</p>
+<br>
 <p align="center">
   <a href="https://revealjs.com">
   <img src="https://hakim-static.s3.amazonaws.com/reveal-js/logo/v1/reveal-black-text.svg" alt="reveal.js" width="450">
